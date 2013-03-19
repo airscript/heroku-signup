@@ -2,6 +2,7 @@ import json
 import urllib
 import time
 import re
+import logging
 
 from webapp2 import WSGIApplication
 from webapp2 import Response
@@ -12,7 +13,7 @@ from google.appengine.api import memcache
 
 signup_endpoint = 'https://api.heroku.com/signup'
 verify_endpoint = 'https://api.heroku.com/invitation2/save'
-email_regex = re.compile('https://api.heroku.com/signup/accept2/(\d+)/(\w+)')
+email_regex = re.compile('https://\w+\.heroku\.com/\w+/accept2?/(\d+)/(\w+)')
 
 def create_new_account(request):
     username = request.get('username')
@@ -68,6 +69,10 @@ def receive_email(request, email):
                 memcache.set(email, (True, password), 300)
             else:
                 memcache.set(email, (False, result.content), 300)
+        else:
+            logging.debug("No match: {}".format(message_text))
+    else:
+        logging.debug("No memcache hit")
 
 
 app = WSGIApplication([
